@@ -10,12 +10,9 @@ A Windows notch-style desktop overlay with a compact status bar and an expandabl
 
 ## Screenshots
 
-**Application screenshots are coming soon.** The current repository does not yet contain verified captures of the running OpenNotch window. Once available, place screenshots in `docs/screenshots/` and add them here.
+![OpenNotch expanded dashboard](docs/screenshots/open-notch-dashboard.png)
 
-Suggested captures:
-- Collapsed notch at the top of the desktop.
-- Expanded dashboard showing the music player and system monitor.
-- Focus timer and tray menu.
+The screenshot above shows the current expanded dashboard, including the media player, CPU and RAM meters, focus timer controls, and animated cat.
 
 ## Features
 
