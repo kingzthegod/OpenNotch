@@ -1,0 +1,17 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# Private signing files
+*.pfx
+*.p12
+*.pvk
+*.key
+*.snk
+*.pem
+
+# Secrets
+.env
+.env.*
