@@ -18,7 +18,7 @@ using Windows.Storage.Streams;
 
 namespace OpenNotch
 {
-    internal record Settings(double Left, double Top);
+    internal record Settings(double Left, double Top, string? ThemeColor = null);
 
     public partial class MainWindow : Window
     {
@@ -31,8 +31,11 @@ namespace OpenNotch
 
         const bool HaloEnabled = true;
 
-        static readonly Color DefaultEdge =
-            Color.FromRgb(0x25, 0x26, 0x30);
+        static readonly Color DefaultThemeColor =
+            Color.FromRgb(0x35, 0xD0, 0x7F);
+
+        Color _themeColor = DefaultThemeColor;
+        Color? _albumArtColor;
 
         // ---------- state ----------
 
@@ -64,7 +67,7 @@ namespace OpenNotch
         bool _clipboardListenerAdded;
 
         readonly SolidColorBrush EdgeBrush =
-            new(DefaultEdge);
+            new(DefaultThemeColor);
 
         UIElement _glowHost => Island;
 
@@ -76,6 +79,9 @@ namespace OpenNotch
             InitializeComponent();
 
             Island.BorderBrush = EdgeBrush;
+
+            // Apply the default theme before the window is shown.
+            ApplyTheme();
 
             // Make HeadBob compatible with the animation code.
             _headBobTransform =
@@ -351,8 +357,123 @@ namespace OpenNotch
                 "OpenNotch",
                 "settings.json");
 
+        static Color BlendColor(Color baseColor, Color tint, double amount)
+        {
+            amount = Math.Clamp(amount, 0, 1);
+
+            byte BlendChannel(byte from, byte to) =>
+                (byte)Math.Clamp(
+                    (int)Math.Round(from + (to - from) * amount),
+                    0,
+                    255);
+
+            return Color.FromRgb(
+                BlendChannel(baseColor.R, tint.R),
+                BlendChannel(baseColor.G, tint.G),
+                BlendChannel(baseColor.B, tint.B));
+        }
+
+        static bool IsLightColor(Color color)
+        {
+            double luminance =
+                (0.2126 * color.R +
+                 0.7152 * color.G +
+                 0.0722 * color.B) / 255.0;
+
+            return luminance >= 0.58;
+        }
+
+        void ApplyTheme()
+        {
+            Color panelColor = BlendColor(
+                Color.FromRgb(8, 9, 13),
+                _themeColor,
+                0.24);
+
+            Color cardColor = BlendColor(
+                Color.FromRgb(23, 24, 33),
+                _themeColor,
+                0.22);
+
+            Color buttonColor = BlendColor(
+                Color.FromRgb(37, 38, 48),
+                _themeColor,
+                0.42);
+
+            Resources["PanelBg"] =
+                new SolidColorBrush(panelColor);
+
+            Resources["CardBg"] =
+                new SolidColorBrush(cardColor);
+
+            Resources["AccentBrush"] =
+                new SolidColorBrush(_themeColor);
+
+            Resources["ButtonBrush"] =
+                new SolidColorBrush(buttonColor);
+
+            Resources["ButtonForegroundBrush"] =
+                new SolidColorBrush(
+                    IsLightColor(buttonColor)
+                        ? Colors.Black
+                        : Colors.White);
+
+            // Keep the selected colour as the border colour unless
+            // album art is currently providing a temporary glow.
+            SetGlow(_albumArtColor);
+        }
+
+        void ChooseTheme_Click(
+            object sender,
+            RoutedEventArgs e)
+        {
+            try
+            {
+                using var dialog = new System.Windows.Forms.ColorDialog
+                {
+                    AllowFullOpen = true,
+                    AnyColor = true,
+                    FullOpen = true,
+                    Color = System.Drawing.Color.FromArgb(
+                        _themeColor.R,
+                        _themeColor.G,
+                        _themeColor.B)
+                };
+
+                if (dialog.ShowDialog() !=
+                    System.Windows.Forms.DialogResult.OK)
+                {
+                    return;
+                }
+
+                _themeColor = Color.FromRgb(
+                    dialog.Color.R,
+                    dialog.Color.G,
+                    dialog.Color.B);
+
+                ApplyTheme();
+                SavePosition();
+
+                ShowTransient(
+                    "theme",
+                    "✓ Colour updated",
+                    null,
+                    1400);
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"The colour picker could not be opened.\n\n{ex.Message}",
+                    "OpenNotch",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+            }
+        }
+
         void LoadPosition()
         {
+            bool positionLoaded = false;
+
             try
             {
                 if (File.Exists(SettingsPath))
@@ -376,16 +497,36 @@ namespace OpenNotch
                             SystemParameters.VirtualScreenTop +
                             SystemParameters.VirtualScreenHeight - 60);
 
-                        return;
+                        if (!string.IsNullOrWhiteSpace(settings.ThemeColor))
+                        {
+                            try
+                            {
+                                object? parsed =
+                                    new ColorConverter().ConvertFromString(
+                                        settings.ThemeColor);
+
+                                if (parsed is Color savedColor)
+                                    _themeColor = savedColor;
+                            }
+                            catch
+                            {
+                                // Ignore an invalid saved colour.
+                            }
+                        }
+
+                        positionLoaded = true;
                     }
                 }
             }
             catch
             {
-                // Use default position.
+                // Use default position and theme.
             }
 
-            ResetPosition();
+            ApplyTheme();
+
+            if (!positionLoaded)
+                ResetPosition();
         }
 
         void SavePosition()
@@ -401,7 +542,7 @@ namespace OpenNotch
                 File.WriteAllText(
                     SettingsPath,
                     JsonSerializer.Serialize(
-                        new Settings(Left, Top)));
+                        new Settings(Left, Top, _themeColor.ToString())));
             }
             catch
             {
@@ -1059,6 +1200,7 @@ namespace OpenNotch
         {
             if (art == null)
             {
+                _albumArtColor = null;
                 ArtBorder.Visibility =
                     Visibility.Collapsed;
 
@@ -1098,13 +1240,10 @@ namespace OpenNotch
             BigArtNote.Visibility =
                 Visibility.Collapsed;
 
-            SetGlow(
-                playing ? DominantColor(art) : null);
-        }
+            _albumArtColor =
+                playing ? DominantColor(art) : null;
 
-        private void SetGlow(object? value)
-        {
-            throw new NotImplementedException();
+            SetGlow(_albumArtColor);
         }
 
         static Color DominantColor(BitmapSource source)
@@ -1207,60 +1346,53 @@ namespace OpenNotch
 
         bool _glowOn;
 
-        void SetGlow(Color? color, object glowHost)
+        void SetGlow(Color? color)
         {
             var duration =
                 TimeSpan.FromMilliseconds(500);
 
-            if (color is Color col)
+            Color targetColor = color ?? _themeColor;
+
+            EdgeBrush.BeginAnimation(
+                SolidColorBrush.ColorProperty,
+                new ColorAnimation(
+                    Color.FromArgb(
+                        235,
+                        targetColor.R,
+                        targetColor.G,
+                        targetColor.B),
+                    duration));
+
+            if (color is Color glowColor && HaloEnabled)
             {
                 _glowOn = true;
 
-                EdgeBrush.BeginAnimation(
-                    SolidColorBrush.ColorProperty,
-                    new ColorAnimation(
-                        Color.FromArgb(
-                            235,
-                            col.R,
-                            col.G,
-                            col.B),
-                        duration));
-
-                if (HaloEnabled)
+                if (GlowHost.Effect is not DropShadowEffect fx)
                 {
-                    if (_glowHost.Effect is not DropShadowEffect fx)
+                    fx = new DropShadowEffect
                     {
-                        fx = new DropShadowEffect
-                        {
-                            Color = col,
-                            BlurRadius = 18,
-                            ShadowDepth = 0,
-                            Opacity = 0
-                        };
+                        Color = glowColor,
+                        BlurRadius = 18,
+                        ShadowDepth = 0,
+                        Opacity = 0
+                    };
 
-                        _glowHost.Effect = fx;
-                    }
-
-                    fx.BeginAnimation(
-                        DropShadowEffect.ColorProperty,
-                        new ColorAnimation(col, duration));
-
-                    fx.BeginAnimation(
-                        DropShadowEffect.OpacityProperty,
-                        new DoubleAnimation(0.7, duration));
+                    GlowHost.Effect = fx;
                 }
+
+                fx.BeginAnimation(
+                    DropShadowEffect.ColorProperty,
+                    new ColorAnimation(glowColor, duration));
+
+                fx.BeginAnimation(
+                    DropShadowEffect.OpacityProperty,
+                    new DoubleAnimation(0.7, duration));
             }
             else
             {
                 _glowOn = false;
 
-                EdgeBrush.BeginAnimation(
-                    SolidColorBrush.ColorProperty,
-                    new ColorAnimation(
-                        DefaultEdge,
-                        duration));
-
-                if (_glowHost.Effect is DropShadowEffect fx)
+                if (GlowHost.Effect is DropShadowEffect fx)
                 {
                     var fade =
                         new DoubleAnimation(0, duration);
@@ -1268,7 +1400,7 @@ namespace OpenNotch
                     fade.Completed += (_, _) =>
                     {
                         if (!_glowOn)
-                            _glowHost.Effect = null;
+                            GlowHost.Effect = null;
                     };
 
                     fx.BeginAnimation(
