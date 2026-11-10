@@ -18,11 +18,14 @@
         
         <SolidColorBrush x:Key="PanelBg" Color="#08090D"/>
         <SolidColorBrush x:Key="CardBg" Color="#171821"/>
+        <SolidColorBrush x:Key="AccentBrush" Color="#35D07F"/>
+        <SolidColorBrush x:Key="ButtonBrush" Color="#252630"/>
+        <SolidColorBrush x:Key="ButtonForegroundBrush" Color="#FFFFFF"/>
         <SolidColorBrush x:Key="Muted" Color="#999BAA"/>
 
         <Style x:Key="IslandButton" TargetType="Button">
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="Background" Value="#252630"/>
+            <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundBrush}"/>
+            <Setter Property="Background" Value="{DynamicResource ButtonBrush}"/>
             <Setter Property="BorderThickness" Value="0"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Padding" Value="8,5"/>
@@ -49,7 +52,7 @@
             Height="56"
             HorizontalAlignment="Center"
             VerticalAlignment="Top"
-            Background="{StaticResource PanelBg}"
+            Background="{DynamicResource PanelBg}"
             BorderThickness="1.5"
             CornerRadius="28"
             ClipToBounds="False"
@@ -79,7 +82,7 @@
                     <Ellipse x:Name="Dot"
                              Width="8"
                              Height="8"
-                             Fill="#35D07F"
+                             Fill="{DynamicResource AccentBrush}"
                              Margin="0,0,8,0"/>
 
                     <Border x:Name="ArtBorder"
@@ -109,7 +112,8 @@
                             Visibility="Collapsed"
                             ClipToBounds="True">
 
-                        <Border Background="#35D07F"
+                        <Border x:Name="LiveBarFill"
+                                Background="{DynamicResource AccentBrush}"
                                 CornerRadius="2"
                                 HorizontalAlignment="Left"
                                 RenderTransformOrigin="0,0.5">
@@ -234,7 +238,7 @@
                 <!-- SYSTEM MONITOR -->
 
                 <Border Grid.Row="1"
-                        Background="{StaticResource CardBg}"
+                        Background="{DynamicResource CardBg}"
                         CornerRadius="12"
                         Padding="10"
                         Margin="0,0,0,10">
@@ -258,7 +262,8 @@
                                 CornerRadius="3"
                                 ClipToBounds="True">
 
-                            <Border Background="#35D07F"
+                            <Border x:Name="CpuBarFill"
+                                    Background="{DynamicResource AccentBrush}"
                                     CornerRadius="3"
                                     HorizontalAlignment="Left"
                                     RenderTransformOrigin="0,0.5">
@@ -289,7 +294,8 @@
                                 CornerRadius="3"
                                 ClipToBounds="True">
 
-                            <Border Background="#64A5FF"
+                            <Border x:Name="RamBarFill"
+                                    Background="{DynamicResource AccentBrush}"
                                     CornerRadius="3"
                                     HorizontalAlignment="Left"
                                     RenderTransformOrigin="0,0.5">
@@ -309,18 +315,31 @@
                 <!-- FOCUS TIMER -->
 
                 <Border Grid.Row="2"
-                        Background="{StaticResource CardBg}"
+                        Background="{DynamicResource CardBg}"
                         CornerRadius="12"
                         Padding="9"
                         Margin="0,0,0,10">
 
                     <StackPanel>
 
-                        <TextBlock Text="FOCUS TIMER"
-                                   Foreground="#999BAA"
-                                   FontSize="9"
-                                   FontWeight="Bold"
-                                   Margin="0,0,0,7"/>
+                        <Grid Margin="0,0,0,7">
+                            <TextBlock Text="FOCUS TIMER"
+                                       Foreground="#999BAA"
+                                       FontSize="9"
+                                       FontWeight="Bold"
+                                       VerticalAlignment="Center"/>
+
+                            <Button x:Name="ThemeButton"
+                                    Content="Choose colour"
+                                    ToolTip="Choose a custom OpenNotch theme colour"
+                                    Width="96"
+                                    Height="22"
+                                    Padding="6,2"
+                                    FontSize="9"
+                                    HorizontalAlignment="Right"
+                                    Style="{StaticResource IslandButton}"
+                                    Click="ChooseTheme_Click"/>
+                        </Grid>
 
                         <StackPanel Orientation="Horizontal">
 
