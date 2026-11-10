@@ -20,7 +20,8 @@ The screenshot above shows the current expanded dashboard, including the media p
 - **Hover and pin controls** — expand on hover and keep the dashboard open with the pin button.
 - **Position controls** — drag the notch to move it, double-click to reset its position, and save its location between launches.
 - **Windows media controls** — show the current media title, artist, and album artwork; previous, play/pause, and next controls use the active Windows media session.
-- **Album-art styling** — use the artwork's dominant colour for the notch border and glow while media is playing.
+- **Custom theme colour** — choose any colour with the system colour picker; OpenNotch tints its surface, cards, controls, progress bars, and border to match. Your choice is saved between launches.
+- **Album-art styling** — use the artwork's dominant colour for a temporary music-reactive border and glow while media is playing; your chosen theme colour returns when playback artwork is inactive.
 - **CPU and memory monitor** — display CPU usage and physical memory usage.
 - **Focus timer** — start 15-, 25-, or 45-minute sessions, stop a session, and receive an audible completion notification.
 - **Quick notifications** — temporary feedback for volume changes and clipboard copies, plus a focus-complete message.
@@ -89,7 +90,7 @@ Visual Studio Code can be used with the C# tooling and the .NET 8 SDK installed.
 
 ## Configuration and local data
 
-OpenNotch stores its window position in:
+OpenNotch stores its window position and chosen theme colour in:
 
 ```text
 %AppData%\OpenNotch\settings.json
