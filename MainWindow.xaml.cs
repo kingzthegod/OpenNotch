@@ -502,7 +502,7 @@ namespace OpenNotch
                             try
                             {
                                 object? parsed =
-                                    new ColorConverter().ConvertFromString(
+                                    ColorConverter.ConvertFromString(
                                         settings.ThemeColor);
 
                                 if (parsed is Color savedColor)
