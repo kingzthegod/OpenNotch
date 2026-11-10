@@ -88,6 +88,23 @@ You can also open `OpenNotch.csproj` in Visual Studio 2022 with the .NET desktop
 
 Visual Studio Code can be used with the C# tooling and the .NET 8 SDK installed.
 
+## Automated builds and releases
+
+GitHub Actions runs the **Windows build** workflow when code is pushed to `main`, when a pull request targets `main`, or when the workflow is started manually.
+
+The workflow builds and publishes a self-contained Windows x64 build, packages it as `OpenNotch-win-x64-unsigned.zip`, and stores it as a workflow artifact for 30 days.
+
+To create a draft GitHub Release, push a version tag:
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+After the workflow succeeds, it creates a **draft release** with the ZIP attached. Review the release and its notes on GitHub before publishing it.
+
+**Signing status:** Automated builds are currently unsigned. Smart App Control or another Windows application-control policy may block them. The workflow does not bypass Windows security, use self-signed certificates, or store signing keys. Trusted code signing will be configured separately.
+
 ## Configuration and local data
 
 OpenNotch stores its window position and chosen theme colour in:
